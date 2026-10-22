@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,11 @@ class Banner extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    protected $appends = [
+        'image_url',
+        'mobile_image_url',
+    ];
 
     protected function casts(): array
     {
@@ -45,7 +51,23 @@ class Banner extends Model
             return $this->image;
         }
 
-        $disk = config('filesystems.default', 'public');
-        return Storage::disk($disk)->url($this->image);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $storage */
+        $storage = Storage::disk(config('filesystems.default', 'public'));
+        return $storage->url($this->image);
+    }
+
+    public function getMobileImageUrlAttribute(): ?string
+    {
+        if (empty($this->mobile_image)) {
+            return null;
+        }
+
+        if (filter_var($this->mobile_image, FILTER_VALIDATE_URL)) {
+            return $this->mobile_image;
+        }
+
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $storage */
+        $storage = Storage::disk(config('filesystems.default', 'public'));
+        return $storage->url($this->mobile_image);
     }
 }
